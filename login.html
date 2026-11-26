@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - متجر اللعبة</title>
+    <title>الحساب - متجر اللعبة</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
@@ -16,83 +16,77 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
         .login-box {
             background: rgba(30, 41, 59, 0.8);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 40px 30px;
+            padding: 30px;
             border-radius: 16px;
             width: 100%;
             max-width: 400px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            text-align: center;
         }
-        h1 { color: #10b981; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; text-align: right; }
-        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; }
+        
+        /* التبويبات العلوية */
+        .tabs { display: flex; margin-bottom: 25px; border-bottom: 2px solid #334155; }
+        .tab-btn {
+            flex: 1; padding: 10px; background: none; border: none;
+            color: #94a3b8; font-family: inherit; font-size: 1.1rem;
+            font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .tab-btn.active { color: #10b981; border-bottom: 3px solid #10b981; }
+
+        .form-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 5px; color: #cbd5e1; font-weight: bold; font-size: 0.9rem;}
         input {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: #0f172a;
-            color: #fff;
-            font-family: inherit;
-            font-size: 1rem;
+            width: 100%; padding: 12px; border-radius: 8px;
+            border: 1px solid #334155; background: #0f172a;
+            color: #fff; font-family: inherit; font-size: 1rem;
         }
         input:focus { outline: none; border-color: #10b981; }
+        
         .submit-btn {
-            width: 100%;
-            padding: 12px;
+            width: 100%; padding: 12px; margin-top: 10px;
             background: linear-gradient(45deg, #10b981, #059669);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-family: inherit;
-            font-size: 1.1rem;
-            margin-top: 10px;
+            color: white; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: bold; font-family: inherit; font-size: 1.1rem;
             transition: 0.3s;
         }
         .submit-btn:disabled { background: #475569; cursor: not-allowed; }
-        .submit-btn:hover:not(:disabled) { transform: scale(1.02); }
-        .toggle-text { margin-top: 20px; color: #94a3b8; font-size: 0.9rem; }
-        .toggle-link { color: #38bdf8; cursor: pointer; font-weight: bold; }
-        .message { margin-top: 15px; padding: 10px; border-radius: 8px; display: none; font-size: 0.9rem; }
+        
+        .message { margin-top: 15px; padding: 10px; border-radius: 8px; display: none; font-size: 0.9rem; text-align: center;}
         .msg-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
         .msg-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+        
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #94a3b8; text-decoration: none; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="login-box">
-        <h1 id="form-title">تسجيل الدخول</h1>
+        <!-- أزرار التبديل -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-login" onclick="switchMode('login')">تسجيل الدخول</button>
+            <button class="tab-btn" id="tab-register" onclick="switchMode('register')">حساب جديد</button>
+        </div>
         
         <div class="form-group">
             <label for="username">اسم المستخدم</label>
-            <input type="text" id="username" placeholder="أدخل اسمك (بأي لغة)">
+            <input type="text" id="username" placeholder="أدخل اسمك (عربي أو إنجليزي)">
         </div>
         
         <div class="form-group">
             <label for="password">كلمة المرور</label>
-            <input type="password" id="password" placeholder="أدخل كلمة المرور">
+            <input type="password" id="password" placeholder="أدخل كلمة المرور (6 حروف على الأقل)">
         </div>
 
         <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">دخول</button>
 
         <div id="message" class="message"></div>
-
-        <div class="toggle-text">
-            <span id="toggle-msg">ليس لديك حساب؟</span> 
-            <span class="toggle-link" id="toggle-link" onclick="toggleMode()">أنشئ حساباً جديداً</span>
-        </div>
         
-        <!-- زر للعودة للمتجر -->
-        <div style="margin-top: 20px;">
-            <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">← العودة للمتجر</a>
-        </div>
+        <a href="index.html" class="back-link">← العودة للمتجر</a>
     </div>
 
     <script>
@@ -100,28 +94,26 @@
         const supabaseKey = 'sb_publishable_AkujQvSlrG33KuGmpyJhiA_SkClVnRx';
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        let isLoginMode = true;
+        let currentMode = 'login'; // الوضع الافتراضي
 
-        const title = document.getElementById('form-title');
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
         const submitBtn = document.getElementById('submit-btn');
-        const toggleMsg = document.getElementById('toggle-msg');
-        const toggleLink = document.getElementById('toggle-link');
         const messageBox = document.getElementById('message');
 
-        function toggleMode() {
-            isLoginMode = !isLoginMode;
-            messageBox.style.display = 'none';
+        // دالة تبديل الأزرار
+        function switchMode(mode) {
+            currentMode = mode;
+            messageBox.style.display = 'none'; // إخفاء الرسائل القديمة
             
-            if (isLoginMode) {
-                title.innerText = 'تسجيل الدخول';
+            if (mode === 'login') {
+                tabLogin.classList.add('active');
+                tabRegister.classList.remove('active');
                 submitBtn.innerText = 'دخول';
-                toggleMsg.innerText = 'ليس لديك حساب؟';
-                toggleLink.innerText = 'أنشئ حساباً جديداً';
             } else {
-                title.innerText = 'إنشاء حساب جديد';
-                submitBtn.innerText = 'تسجيل';
-                toggleMsg.innerText = 'لديك حساب بالفعل؟';
-                toggleLink.innerText = 'سجل دخولك';
+                tabRegister.classList.add('active');
+                tabLogin.classList.remove('active');
+                submitBtn.innerText = 'إنشاء حساب';
             }
         }
 
@@ -131,16 +123,13 @@
             messageBox.style.display = 'block';
         }
 
-        // الدالة السحرية: تحويل أي نص (عربي/رموز) إلى بريد إلكتروني وهمي مقبول في Supabase
+        // الخدعة: تحويل الاسم لأي لغة إلى بريد وهمي
         function generateFakeEmail(username) {
             try {
-                // تحويل النص إلى Base64 ليدعم كل اللغات
                 const encoded = btoa(unescape(encodeURIComponent(username)));
-                // إزالة الرموز التي قد ترفضها خدمة البريد
                 const safeEncoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
                 return `${safeEncoded}@game.local`;
             } catch (e) {
-                // في حال حدوث خطأ نادر، نستخدم الوقت الحالي
                 return `user${Date.now()}@game.local`;
             }
         }
@@ -150,7 +139,7 @@
             const password = document.getElementById('password').value;
 
             if (!username || !password) {
-                showMessage('يرجى إدخال اسم المستخدم وكلمة المرور.', true);
+                showMessage('يرجى ملء جميع الحقول.', true);
                 return;
             }
             if (password.length < 6) {
@@ -159,50 +148,44 @@
             }
 
             const fakeEmail = generateFakeEmail(username);
-            
             submitBtn.innerText = 'جاري المعالجة...';
             submitBtn.disabled = true;
 
-            if (isLoginMode) {
+            if (currentMode === 'login') {
                 // تسجيل الدخول
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: fakeEmail,
-                    password: password,
+                const { error } = await supabase.auth.signInWithPassword({
+                    email: fakeEmail, password: password,
                 });
 
                 if (error) {
-                    showMessage('خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.', true);
+                    showMessage('اسم المستخدم أو كلمة المرور غير صحيحة.', true);
+                    submitBtn.innerText = 'دخول';
+                    submitBtn.disabled = false;
                 } else {
-                    showMessage('تم تسجيل الدخول بنجاح! جاري التحويل...', false);
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                    showMessage('تم الدخول بنجاح! جاري التحويل...', false);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
                 }
             } else {
                 // إنشاء حساب جديد
-                const { data, error } = await supabase.auth.signUp({
-                    email: fakeEmail,
-                    password: password,
-                    options: {
-                        data: {
-                            username: username // حفظ الاسم الأصلي كما هو
-                        }
-                    }
+                const { error } = await supabase.auth.signUp({
+                    email: fakeEmail, password: password,
+                    options: { data: { username: username } }
                 });
 
                 if (error) {
                     if (error.message.includes('already registered')) {
-                        showMessage('هذا الاسم محجوز، جرب اسماً آخر أو سجل دخولك.', true);
+                        showMessage('هذا الاسم مستخدم بالفعل، جرب اسماً آخر.', true);
                     } else {
-                        showMessage('خطأ في التسجيل: ' + error.message, true);
+                        showMessage('خطأ: ' + error.message, true);
                     }
+                    submitBtn.innerText = 'إنشاء حساب';
+                    submitBtn.disabled = false;
                 } else {
                     showMessage('تم إنشاء الحساب بنجاح! جاري التحويل...', false);
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
                 }
             }
-
-            submitBtn.innerText = isLoginMode ? 'دخول' : 'تسجيل';
-            submitBtn.disabled = false;
         }
     </script>
 </body>
-  </html> 
+    </html>
