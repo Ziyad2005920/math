@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر اللعبة - السوق السوداء</title>
+    <!-- استدعاء مكتبة Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* تنسيقات التصميم */
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #10b981;
+            --accent-hover: #059669;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .header h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .product-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #334155;
+            transition: transform 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        .product-title {
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
+            color: #38bdf8;
+        }
+        .product-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #334155;
+            padding-top: 15px;
+        }
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+        .buy-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            transition: background-color 0.2s;
+        }
+        .buy-btn:hover {
+            background-color: var(--accent-hover);
+        }
+        .loader, .empty-msg, .error-msg {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>متجر اللعبة</h1>
+        <p>أهلاً بك في السوق السري، هنا تجد أفضل العروض والمعلومات النادرة.</p>
+    </div>
+
+    <div id="products-container" class="products-grid">
+        <div class="loader">جاري تحميل المنتجات...</div>
+    </div>
+
+    <script>
+        // إعدادات Supabase (الرابط والمفتاح الخاص بك)
+        const supabaseUrl = 'https://vcwvtgecyzwnqnyopdrm.supabase.co';
+        const supabaseKey = 'sb_publishable_AkujQvSlrG33KuGmpyJhiA_SkClVnRx';
+        
+        // إنشاء الاتصال
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // دالة جلب وعرض المنتجات
+        async function loadProducts() {
+            const container = document.getElementById('products-container');
+            
+            // جلب المنتجات التي لم يتم بيعها بعد
+            const { data: products, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('is_sold', false);
+
+            // إذا حدث خطأ
+            if (error) {
+                container.innerHTML = `<div class="error-msg">حدث خطأ في الاتصال بقاعدة البيانات.</div>`;
+                console.error('خطأ:', error);
+                return;
+            }
+
+            // إذا كان المتجر فارغاً
+            if (products.length === 0) {
+                container.innerHTML = `<div class="empty-msg">لا توجد منتجات معروضة للبيع حالياً. عد قريباً!</div>`;
+                return;
+            }
+
+            // عرض المنتجات
+            container.innerHTML = ''; // مسح رسالة التحميل
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                card.innerHTML = `
+                    <div>
+                        <h2 class="product-title">${product.title}</h2>
+                        <p class="product-desc">${product.description}</p>
+                    </div>
+                    <div class="product-footer">
+                        <span class="product-price">${product.price} عملة</span>
+                        <button class="buy-btn" onclick="alert('نظام الشراء قيد التطوير! سيتم تفعيله قريباً.')">شراء الآن</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // تشغيل الدالة عند فتح الصفحة
+        loadProducts();
+    </script>
+</body>
+  </html>
