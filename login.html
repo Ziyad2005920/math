@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - متجر اللعبة</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-box {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        h1 { color: #10b981; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        input:focus { outline: none; border-color: #10b981; }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .submit-btn:disabled { background: #475569; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) { transform: scale(1.02); }
+        .toggle-text { margin-top: 20px; color: #94a3b8; font-size: 0.9rem; }
+        .toggle-link { color: #38bdf8; cursor: pointer; font-weight: bold; }
+        .message { margin-top: 15px; padding: 10px; border-radius: 8px; display: none; font-size: 0.9rem; }
+        .msg-error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+        .msg-success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h1 id="form-title">تسجيل الدخول</h1>
+        
+        <div class="form-group">
+            <label for="username">اسم المستخدم</label>
+            <input type="text" id="username" placeholder="أدخل اسمك (بأي لغة)">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">كلمة المرور</label>
+            <input type="password" id="password" placeholder="أدخل كلمة المرور">
+        </div>
+
+        <button class="submit-btn" id="submit-btn" onclick="handleSubmit()">دخول</button>
+
+        <div id="message" class="message"></div>
+
+        <div class="toggle-text">
+            <span id="toggle-msg">ليس لديك حساب؟</span> 
+            <span class="toggle-link" id="toggle-link" onclick="toggleMode()">أنشئ حساباً جديداً</span>
+        </div>
+        
+        <!-- زر للعودة للمتجر -->
+        <div style="margin-top: 20px;">
+            <a href="index.html" style="color: #94a3b8; text-decoration: none; font-size: 0.9rem;">← العودة للمتجر</a>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://vcwvtgecyzwnqnyopdrm.supabase.co';
+        const supabaseKey = 'sb_publishable_AkujQvSlrG33KuGmpyJhiA_SkClVnRx';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let isLoginMode = true;
+
+        const title = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleMsg = document.getElementById('toggle-msg');
+        const toggleLink = document.getElementById('toggle-link');
+        const messageBox = document.getElementById('message');
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            messageBox.style.display = 'none';
+            
+            if (isLoginMode) {
+                title.innerText = 'تسجيل الدخول';
+                submitBtn.innerText = 'دخول';
+                toggleMsg.innerText = 'ليس لديك حساب؟';
+                toggleLink.innerText = 'أنشئ حساباً جديداً';
+            } else {
+                title.innerText = 'إنشاء حساب جديد';
+                submitBtn.innerText = 'تسجيل';
+                toggleMsg.innerText = 'لديك حساب بالفعل؟';
+                toggleLink.innerText = 'سجل دخولك';
+            }
+        }
+
+        function showMessage(text, isError) {
+            messageBox.innerText = text;
+            messageBox.className = isError ? 'message msg-error' : 'message msg-success';
+            messageBox.style.display = 'block';
+        }
+
+        // الدالة السحرية: تحويل أي نص (عربي/رموز) إلى بريد إلكتروني وهمي مقبول في Supabase
+        function generateFakeEmail(username) {
+            try {
+                // تحويل النص إلى Base64 ليدعم كل اللغات
+                const encoded = btoa(unescape(encodeURIComponent(username)));
+                // إزالة الرموز التي قد ترفضها خدمة البريد
+                const safeEncoded = encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                return `${safeEncoded}@game.local`;
+            } catch (e) {
+                // في حال حدوث خطأ نادر، نستخدم الوقت الحالي
+                return `user${Date.now()}@game.local`;
+            }
+        }
+
+        async function handleSubmit() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showMessage('يرجى إدخال اسم المستخدم وكلمة المرور.', true);
+                return;
+            }
+            if (password.length < 6) {
+                showMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل.', true);
+                return;
+            }
+
+            const fakeEmail = generateFakeEmail(username);
+            
+            submitBtn.innerText = 'جاري المعالجة...';
+            submitBtn.disabled = true;
+
+            if (isLoginMode) {
+                // تسجيل الدخول
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: fakeEmail,
+                    password: password,
+                });
+
+                if (error) {
+                    showMessage('خطأ: اسم المستخدم أو كلمة المرور غير صحيحة.', true);
+                } else {
+                    showMessage('تم تسجيل الدخول بنجاح! جاري التحويل...', false);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                }
+            } else {
+                // إنشاء حساب جديد
+                const { data, error } = await supabase.auth.signUp({
+                    email: fakeEmail,
+                    password: password,
+                    options: {
+                        data: {
+                            username: username // حفظ الاسم الأصلي كما هو
+                        }
+                    }
+                });
+
+                if (error) {
+                    if (error.message.includes('already registered')) {
+                        showMessage('هذا الاسم محجوز، جرب اسماً آخر أو سجل دخولك.', true);
+                    } else {
+                        showMessage('خطأ في التسجيل: ' + error.message, true);
+                    }
+                } else {
+                    showMessage('تم إنشاء الحساب بنجاح! جاري التحويل...', false);
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+                }
+            }
+
+            submitBtn.innerText = isLoginMode ? 'دخول' : 'تسجيل';
+            submitBtn.disabled = false;
+        }
+    </script>
+</body>
+  </html> 
